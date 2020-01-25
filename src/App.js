@@ -3,7 +3,7 @@ import React from 'react'
 // import TimeLine from './TimeLine'
 // import TimeLine2 from './TimeLine2'
 // import TimeLine3 from './TimeLine3'
-import MovingDot from './components/MovingDot'
+import MovingDot from './components/MovingDot_take2'
 
 const App = () => {
   return ( 
