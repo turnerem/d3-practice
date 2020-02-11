@@ -28,7 +28,7 @@ bee.updatePath = ( oldPath, configs ) => {
   const radius = this.getRadius(degrees);
   newPath.tx = hivex + Math.cos(radiansTravelled) * radius
   newPath.ty = hivey + Math.sin(radiansTravelled) * radius
-
+  console.log('newPath', newPath)
   return newPath
 }
 
@@ -44,7 +44,7 @@ bee.mirrorOrigin = (hitAxis, path) => {
 bee.calcPath = (oldPath, configs) => {
   const { height, width, pointRad, degreeIncrement } = configs
   // const { degrees, hivex, hivey, durationMultiplier } = oldPath
-
+  console.log('old path', oldPath)
   const newPath = this.updatePath( oldPath, configs )
 
   if (newPath.tx >= pointRad && 

@@ -13,9 +13,9 @@ class MovingDot extends Component {
       hivex:300, hivey:600, 
       sx:300, sy: 600, 
       x:300, y:600,
-      tx: null, ty: null,
+      tx: 300, ty: 600,
       // revolutions: 2,
-      degrees: 0,
+      degrees: 720,
       durAdjust: 1,
       clockwise: false
     }
@@ -74,7 +74,9 @@ class MovingDot extends Component {
     const { configs } = this.props
     const { duration } = configs
     // store the source position
+    // console.log('old path in animate', path)
     const newPath = calcPath(path, configs)
+    // console.log('new path in animate', newPath)
 
     let timer = d3.timer(( elapsed ) => {
       // compute how far through the animation we are (0 to 1)
@@ -82,8 +84,8 @@ class MovingDot extends Component {
       const t = Math.min(1, elapsed / duration * newPath.durAdjust);
       // update point positions (interpolate between source and target)
 
-      path.x = path.sx * (1 - t) + path.tx * t;
-      path.y = path.sy * (1 - t) + path.ty * t;
+      newPath.x = newPath.sx * (1 - t) + newPath.tx * t;
+      newPath.y = newPath.sy * (1 - t) + newPath.ty * t;
 
       // update what is drawn on screen
       this.draw( ctx );
@@ -94,7 +96,7 @@ class MovingDot extends Component {
         timer.stop();
 
         // update to use next layout
-        this.setState({ path })
+        this.setState({ path: newPath })
 
         // start animation for next layout
         setTimeout(this.animate, duration, ctx);
