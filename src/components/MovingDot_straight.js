@@ -13,12 +13,12 @@ class MovingDot extends Component {
     width: 1000,
     startLayouts: [{x: 300, y: 600}],
     // layouts represent the location of each dot. Updated at each transition phase.
-    layouts: [{x: 300, y: 600}],
+    layouts: [{x: 300, sx: 300, tx: 400, y: 600, sy: 600, ty: 700}],
     // once we know the starting point and the degrees, we know the location of the dot (IFF it starts at (1, 0))
     degrees: 5,
     // increment should equal degrees starting value
     degreeIncrement: 5,
-    duration: 50,
+    duration: 500,
     // may need to reduce duration for each 5 degree increment as the path gets longer
     multiplier: 1,
     timer: null,
@@ -73,23 +73,23 @@ class MovingDot extends Component {
     ctx.restore();
   }
 
-  mirrorStart = (hitAxis, loc, i) => {    
-    this.setState(({startLayouts }) => {
-      const startLayout = startLayouts[i]
-      // i is the index of the point in the startLayouts array
-      // if point has hit x-axis, need to get different between x-axis hitpoint (loc) and start location on x-axis
-      // and add this onto loc, then get mirror image of swirl
-      const originDist1D = loc - startLayout[hitAxis]
-      startLayout[hitAxis] = startLayout[hitAxis] + originDist1D
-      startLayouts.splice(i, 1, startLayout)
-      return { startLayouts }
-    })
-  }
+  // mirrorStart = (hitAxis, loc, i) => {    
+  //   this.setState(({startLayouts }) => {
+  //     const startLayout = startLayouts[i]
+  //     // i is the index of the point in the startLayouts array
+  //     // if point has hit x-axis, need to get different between x-axis hitpoint (loc) and start location on x-axis
+  //     // and add this onto loc, then get mirror image of swirl
+  //     const originDist1D = loc - startLayout[hitAxis]
+  //     startLayout[hitAxis] = startLayout[hitAxis] + originDist1D
+  //     startLayouts.splice(i, 1, startLayout)
+  //     return { startLayouts }
+  //   })
+  // }
 
 
   animate = ( ctx ) => {
     const { 
-      degrees, duration, layouts, startLayouts, 
+      degrees, duration, layouts, 
       pointRad, height, width, screenScale
     } = this.state
     console.log(degrees, 'the degrees')
@@ -99,8 +99,8 @@ class MovingDot extends Component {
       let newPoint = {};
       newPoint.sx = point.x;
       newPoint.sy = point.y;
-      newPoint.x = newPoint.tx = startLayouts[i].x + getX(degrees);
-      newPoint.y = newPoint.ty = startLayouts[i].y + getY(degrees);
+      newPoint.x = newPoint.tx = (point.x >= point.sx) ? point.x + 100 : point.x - 100;
+      newPoint.y = newPoint.ty = (point.y >= point.sy) ? point.y + 100 : point.y - 100;
       newLayouts.push( newPoint );
     });
 
@@ -114,27 +114,53 @@ class MovingDot extends Component {
       layouts.forEach((point, i) => {
         point.x = point.sx * (1 - t) + point.tx * t;
         point.y = point.sy * (1 - t) + point.ty * t;
-        if ((point.y - pointRad <= 0) | (point.y + pointRad > height * screenScale)) {
-          console.log('flipped! t', t, 'y', point.y, 'y start', point.sy, 'y end', point.ty)
-
-          this.setState(({layouts}) => {
-            console.log('setting state, oldlayout ', layouts[i])
-            layouts[i].sy = point.y - (point.sy - point.y)
-            layouts[i].ty = point.y - (point.ty - point.y)
+        if ((point.y - pointRad <= 5) | (point.y + pointRad > height * screenScale)) {
+          this.setState(({startLayouts, layouts}) => {
+            layouts[i].sy = Math.floor(point.y) - (point.sy - Math.floor(point.y))
+            layouts[i].ty = Math.floor(point.y) - (point.ty - Math.floor(point.y)) 
+              const  loc = point.x
+              const hitAxis = 'x'
+              const startLayout = startLayouts[i]
+              
+              // i is the index of the point in the startLayouts array
+              // if point has hit x-axis, need to get different between x-axis hitpoint (loc) and start location on x-axis
+              // and add this onto loc, then get mirror image of swirl
+              const originDist1D = loc - startLayout[hitAxis]
+              startLayout[hitAxis] = startLayout[hitAxis] + originDist1D
+              startLayouts.splice(i, 1, startLayout)
+              return { startLayouts, layouts }
+                
+          })
+        }
+        if ((point.x - pointRad <= 5) | (point.x + pointRad > width * screenScale)) {
+          this.setState(({startLayouts, layouts}) => {
+            layouts[i].sx = Math.floor(point.x) - (point.sx - Math.floor(point.x))
+            layouts[i].tx = Math.floor(point.x) - (point.tx - Math.floor(point.x))
             // this.mirrorStart('x', point.x, i)
-            console.log('new layout', layouts[i])
-            return { layouts }
-          })
-        }
-        if ((point.x - pointRad < 0) | (point.x + pointRad > width)) {
-          this.setState(({layouts}) => {
-            layouts[i].sx = point.x - (point.sx - point.x)
-            layouts[i].tx = point.x - (point.tx - point.x)
-            // this.mirrorStart('y', point.y, i)
-            return { layouts }
-          })
 
+              const  loc = point.y
+              const hitAxis = 'y'
+              const startLayout = startLayouts[i]
+              
+              // i is the index of the point in the startLayouts array
+              // if point has hit x-axis, need to get different between x-axis hitpoint (loc) and start location on x-axis
+              // and add this onto loc, then get mirror image of swirl
+              const originDist1D = loc - startLayout[hitAxis]
+              startLayout[hitAxis] = startLayout[hitAxis] + originDist1D
+              startLayouts.splice(i, 1, startLayout)
+              return { startLayouts, layouts }
+                
+          })
         }
+        // if ((point.x - pointRad < 0) | (point.x + pointRad > width)) {
+        //   this.setState(({layouts}) => {
+        //     layouts[i].sx = point.x - (point.sx - point.x)
+        //     layouts[i].tx = point.x - (point.tx - point.x)
+        //     // this.mirrorStart('y', point.y, i)
+        //     return { layouts }
+        //   })
+
+        // }
       });
 
       // update what is drawn on screen

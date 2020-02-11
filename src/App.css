@@ -54,3 +54,24 @@ html, body {
 body {
   background-color: #ffffff;
 }
+
+
+div.bar_chart {
+  text-align: center;
+  vertical-align: middle;
+}
+
+rect:hover {
+  fill: #00ff00
+}
+
+.x-axis text {
+  font-size: 4vw
+}
+
+/* svg text.label {
+fill:white;
+font: 15px;  
+font-weight: 400;
+text-anchor: middle;
+} */
