@@ -2,7 +2,7 @@ const { expect } = require('chai')
 const bee = require('./golden_ratio_utils')
 
 const { 
-  distBwPts, updatePath, 
+  distBwPts, updateVanillaPath, 
   mirrorOrigin, findHitLoc, 
   adjustDegreesToT, calcPath 
 } = bee
@@ -31,18 +31,18 @@ describe('distBwPts', () => {
   })
 });
 
-describe.only('updatePath', () => {
+describe.only('updateVanillaPath', () => {
   it('should return an object with 11 keys', () => {
-    expect(updatePath(path, configs)).to.have.keys(
+    expect(updateVanillaPath(path, configs)).to.have.keys(
       'sx', 'sy', 'x', 'y', 
       'tx', 'ty', 'hivex', 'hivey',
       'degrees', 'durAdjust', 'clockwise')
   })
   it('all values should be truthy or bool', () => {
-    const path2 = updatePath(path, configs)
+    const path2 = updateVanillaPath(path, configs)
     const actualVals = Object.values(path2)
     console.log('path1', path, 'path2', path2)
-    const path3 = updatePath(path2, configs)
+    const path3 = updateVanillaPath(path2, configs)
     console.log('path3', path3)
 
     let tot = 0
