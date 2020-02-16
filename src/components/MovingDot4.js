@@ -24,7 +24,8 @@ class MovingDot extends Component {
       tx: 300, ty: 600,
       distST: null,
       // revolutions: 2,
-      degrees: 720,
+      degrees: 360,
+      rotationDegrees: 0,
       durAdjust: 1,
       clockwise: false
     }
@@ -128,16 +129,16 @@ class MovingDot extends Component {
 
     // this.setState(({path}) => {
     // console.log('in setState of updatePath')
-    const { hivex, hivey } = path
-    console.log('path to spread', path.hivex, path.hivey, path.hiveOrientation)
+    // console.log('path to spread', path.hivex, path.hivey, path.hiveOrientation)
     const newPath = {...path}
     newPath.sx = path.tx;
     newPath.sy = path.ty;
     
     // before updating object any further, see if the would-be updates lead dot outside plot bounary
     const tryDegrees = path.degrees + degreeIncrement
-    // newPath.durAdjust = 1
-    const radiansTravelled = toRadians(tryDegrees),
+      
+    const { hivex, hivey, rotationDegrees } = path
+    const radiansTravelled = toRadians(tryDegrees + rotationDegrees),
     radius = getRadius(tryDegrees),
     tryTx = hivex + Math.cos(radiansTravelled) * radius * path.hiveOrientation.x,
     tryTy = hivey + Math.sin(radiansTravelled) * radius * path.hiveOrientation.y;
@@ -191,6 +192,7 @@ class MovingDot extends Component {
 
         // adjust degree increment - won't be adding on full degreeIncrement
         this.adjustDegreesToT(newPath, hitX, hitY, tryTx, tryTy)
+
         // getNewHive only works if newPath tx and ty have been updated to hitX and hitY
         // new hive is used in calculation of NEXT path, not adjustment of current path
         this.getNewHive(newPath, hitAxis)
@@ -231,11 +233,11 @@ class MovingDot extends Component {
     // if point hits y-axis, then update hivey
     // note that this will only work if destination points have already been updated - we make use of tx/ty
     path[`hive${hitAxis}`] += path[`t${hitAxis}`] - path[`hive${hitAxis}`]
-    // if hit y-axis, must get reflection along x-axis of hive orientation,
-    // (which means changing y-part of hive orientation(??))
-    const otherAxis = hitAxis === 'y' ? 'x' : 'y'
-    // path.hiveOrientation[hitAxis] *= -1
-    path.hiveOrientation[otherAxis] *= -1
+    
+    const { degrees } = path;
+    // must rotate origin orientation by some degrees...
+    const rotationD = hitAxis === 'x' ? 
+    path.hiveOrientation[hitAxis] *= -1
   }
 
 

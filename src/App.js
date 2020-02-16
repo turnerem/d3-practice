@@ -9,7 +9,7 @@ import MovingDot from './components/MovingDot4'
 const configs = {
   height: 700, width: 1000, 
   pointRad: 20, degrees: 5, 
-  durationMultiplier: 2, 
+  durationMultiplier: 3, 
   degreeIncrement: 5
 }
 
