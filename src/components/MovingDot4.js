@@ -22,15 +22,16 @@ class MovingDot extends Component {
       sx:300, sy: 600, 
       x:300, y:600,
       tx: 300, ty: 600,
+      distST: null,
       // revolutions: 2,
-      degrees: 1080,
+      degrees: 720,
       durAdjust: 1,
       clockwise: false
     }
   }
 
   componentDidMount() {
-    console.log('mounting', window.devicePixelRatio)
+    // console.log('mounting', window.devicePixelRatio)
     const { height, width } = this.props.configs
     
     const canvas = d3.select('body').append('canvas')
@@ -78,34 +79,40 @@ class MovingDot extends Component {
   
 
   animate = ( ctx ) => {
-    const { duration } = this.props.configs
+    const { durationMultiplier } = this.props.configs
     // store the source position
     // console.log('old path in animate', path)
-    this.updatePath()
 
-    const { path } = this.state
-    // console.log('new path in animate', newPath)
+    this.setState(({ path }) => {
+      const newPath = this.updatePath(path)
+      // console.log('new path in animate', newPath)
+  
+      let timer = d3.timer(( elapsed ) => {
+        // compute how far through the animation we are (0 to 1)
+  
+        const duration = durationMultiplier * newPath.distST
 
-    let timer = d3.timer(( elapsed ) => {
-      // compute how far through the animation we are (0 to 1)
+        const t = Math.min(1, elapsed / duration);
+        // update point positions (interpolate between source and target)
+  
+        newPath.x = newPath.sx * (1 - t) + newPath.tx * t;
+        newPath.y = newPath.sy * (1 - t) + newPath.ty * t;
+  
+        // update what is drawn on screen
+        this.draw( ctx );
+  
+        // if this animation is over
+        if (t === 1) {
+          // stop this timer for this layout and start a new one
+          timer.stop();
+          // start animation for next layout
+          setTimeout(this.animate, duration, ctx);
+        }
+      });
+      // console.log('setting state with newPath')
+      return { path: newPath }
+    })
 
-      const t = Math.min(1, elapsed / duration);
-      // update point positions (interpolate between source and target)
-
-      path.x = path.sx * (1 - t) + path.tx * t;
-      path.y = path.sy * (1 - t) + path.ty * t;
-
-      // update what is drawn on screen
-      this.draw( ctx );
-
-      // if this animation is over
-      if (t === 1) {
-        // stop this timer for this layout and start a new one
-        timer.stop();
-        // start animation for next layout
-        setTimeout(this.animate, duration, ctx);
-      }
-    });
   }
 
 
@@ -115,74 +122,87 @@ class MovingDot extends Component {
   // end point of last path becomes beginning of new path
   // increment degrees to represent degrees for destination x y
   // find destination x, y with these new degrees
-  updatePath = () => {
+  updatePath = (path) => {
     const { degreeIncrement, pointRad, width, height } = this.props.configs
-    console.log('pointRad', pointRad)
+    // console.log('pointRad', pointRad)
 
-    this.setState(({path}) => {
-      console.log('in setState of updatePath')
-      const { hivex, hivey } = path
-      console.log('path to spread', path)
-      const newPath = {...path}
-      newPath.sx = path.tx;
-      newPath.sy = path.ty;
+    // this.setState(({path}) => {
+    // console.log('in setState of updatePath')
+    const { hivex, hivey } = path
+    console.log('path to spread', path.hivex, path.hivey, path.hiveOrientation)
+    const newPath = {...path}
+    newPath.sx = path.tx;
+    newPath.sy = path.ty;
+    
+    // before updating object any further, see if the would-be updates lead dot outside plot bounary
+    const tryDegrees = path.degrees + degreeIncrement
+    // newPath.durAdjust = 1
+    const radiansTravelled = toRadians(tryDegrees),
+    radius = getRadius(tryDegrees),
+    tryTx = hivex + Math.cos(radiansTravelled) * radius * path.hiveOrientation.x,
+    tryTy = hivey + Math.sin(radiansTravelled) * radius * path.hiveOrientation.y;
+    console.log('path, just before condition', path)
+    
+    
+    if (tryTx > pointRad && tryTx < width - pointRad &&
+      tryTy > pointRad && tryTy < height - pointRad) {
+        newPath.degrees = tryDegrees
+        newPath.tx = tryTx
+        newPath.ty = tryTy
+        newPath.distST = distBwPts(newPath.sx, newPath.sy, newPath.tx, newPath.ty)
 
-      // before updating object any further, see if the would-be updates lead dot outside plot bounary
-      const tryDegrees = path.degrees + degreeIncrement
-      // newPath.durAdjust = 1
-      const radiansTravelled = toRadians(tryDegrees),
-       radius = getRadius(tryDegrees),
-       tryTx = hivex + Math.cos(radiansTravelled) * radius * path.hiveOrientation.x,
-       tryTy = hivey + Math.sin(radiansTravelled) * radius * path.hiveOrientation.y;
+        return newPath
+      } else {
+        console.log('HIT EDGE')
+        // check whether destination of new path strays outside boundary
+        let hitX
+        let hitY
+        let hitAxis
+      // maybe a functin to check whether point is moving away from hit loc
 
-      if (tryTx >= pointRad && tryTx <= width - pointRad &&
-        tryTy >= pointRad && tryTy <= height - pointRad) {
-          newPath.degrees = tryDegrees
-          newPath.tx = tryTx
-          newPath.ty = tryTy
+        if (tryTx < pointRad) {
+          console.log('tryTx < pointRad')
+          hitAxis = 'y'
+          hitX = pointRad
+          hitY = findHitLoc(hitAxis, hitX, newPath.sx, newPath.sy, tryTx, tryTy)
 
-          return { path: newPath }
-        } else {
-          console.log('HIT EDGE')
-          // check whether destination of new path strays outside boundary
-          let hitX
-          let hitY
-          let hitAxis
-
-          if (tryTx <= pointRad) {
-            hitAxis = 'y'
-            hitX = pointRad
-            hitY = findHitLoc(hitAxis, hitX, newPath.sx, newPath.sy, tryTx, tryTy)
-
-          } else if (tryTx >= width - pointRad) {
-            hitAxis = 'y'
-            hitX = width - pointRad
-            hitY = findHitLoc(hitAxis, hitX, newPath.sx, newPath.sy, tryTx, tryTy)
-          } else if (tryTy <= pointRad) {
-            hitAxis = 'x'
-            hitY = pointRad
-            hitX = findHitLoc(hitAxis, hitY, newPath.sx, newPath.sy, tryTx, tryTy)
-          } else if (tryTy >= height - pointRad) {
-            hitAxis = 'x'
-            hitY = height - pointRad
-            hitX = findHitLoc(hitAxis, hitY, newPath.sx, newPath.sy, tryTx, tryTy)
-          }
-
-          newPath.tx = hitX
-          newPath.ty = hitY
-
-          console.log('hitX, hitY', hitX, hitY)
-
-          // adjust degree increment - won't be adding on full degreeIncrement
-          this.adjustDegreesToT(newPath, hitX, hitY, tryTx, tryTy)
-          // getNewHive only works if newPath tx and ty have been updated to hitX and hitY
-          // new hive is used in calculation of NEXT path, not adjustment of current path
-          this.getNewHive(newPath, hitAxis)
-          return { path: newPath }
-
+        } else if (tryTx > width - pointRad) {
+          console.log('tryTx > width - pointRad')
+          hitAxis = 'y'
+          hitX = width - pointRad
+          hitY = findHitLoc(hitAxis, hitX, newPath.sx, newPath.sy, tryTx, tryTy)
+        } else if (tryTy < pointRad) {
+          console.log('tryTy < pointRad')
+          hitAxis = 'x'
+          hitY = pointRad
+          hitX = findHitLoc(hitAxis, hitY, newPath.sx, newPath.sy, tryTx, tryTy)
+        } else if (tryTy > height - pointRad) {
+          console.log('tryTy > height - pointRad')
+          hitAxis = 'x'
+          hitY = height - pointRad
+          hitX = findHitLoc(hitAxis, hitY, newPath.sx, newPath.sy, tryTx, tryTy)
         }
+
+        newPath.tx = hitX
+        newPath.ty = hitY
+        newPath.distST = distBwPts(newPath.sx, newPath.sy, newPath.tx, newPath.ty)
+
+        console.log('hitX, hitY', hitX, hitY)
+
+        // adjust degree increment - won't be adding on full degreeIncrement
+        this.adjustDegreesToT(newPath, hitX, hitY, tryTx, tryTy)
+        // getNewHive only works if newPath tx and ty have been updated to hitX and hitY
+        // new hive is used in calculation of NEXT path, not adjustment of current path
+        this.getNewHive(newPath, hitAxis)
+        
+        console.log('path to spread', newPath.hivex, newPath.hivey, newPath.hiveOrientation)
+
+        // console.log('returning object after edge-hit')
+        return newPath
+
+      }
       
-    })
+    // })
 
   }
 
@@ -213,7 +233,9 @@ class MovingDot extends Component {
     path[`hive${hitAxis}`] += path[`t${hitAxis}`] - path[`hive${hitAxis}`]
     // if hit y-axis, must get reflection along x-axis of hive orientation,
     // (which means changing y-part of hive orientation(??))
-    path.hiveOrientation[hitAxis] *= -1
+    const otherAxis = hitAxis === 'y' ? 'x' : 'y'
+    // path.hiveOrientation[hitAxis] *= -1
+    path.hiveOrientation[otherAxis] *= -1
   }
 
 

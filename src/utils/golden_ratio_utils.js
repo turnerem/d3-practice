@@ -11,12 +11,12 @@ const toRadians = (degrees) => {
 
 const getRadius = (degrees) => {
   const phi = (1 + Math.sqrt(5)) / 2;
-  console.log('the radius', Math.pow(phi, (degrees / 90)))
+  // console.log('the radius', Math.pow(phi, (degrees / 90)))
   return Math.pow(phi, (degrees / 90));
 }
 
 const findHitLoc = (hitAxis, boundaryLoc, sx, sy, tx, ty) => {
-  console.log('finding hit location - boundaryLoc', boundaryLoc, 'sx, sy', sx, sy, 'tx, ty', tx, ty)
+  // console.log('finding hit location - boundaryLoc', boundaryLoc, 'sx, sy', sx, sy, 'tx, ty', tx, ty)
   const m = (ty - sy) / (tx - sx)
   if (hitAxis === 'x') {
     return (boundaryLoc - sy) / m + sx
